@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+<meta charset="UTF-8" />
+<title>Calendrier magique pour Éden</title>
+
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: PT Sans Narrow;
+}
+
+/* ===== FOND TRAÎNEAU ===== */
+#fond-traineau {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+#video-traineau,
+#image-traineau {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#image-traineau {
+  display: none;
+}
+
+/* ===== TITRE ===== */
+h1 {
+  text-align: center;
+  margin: 20px;
+  color: white;
+  text-shadow: 2px 2px 5px black;
+  position: relative;
+  z-index: 20;
+}
+
+/* ===== CALENDRIER ===== */
+#calendrier {
+  display: grid;
+  grid-template-columns: repeat(6, 100px);
+  gap: 15px;
+  justify-content: center;
+  margin: 20px auto;
+  position: relative;
+  z-index: 50;
+  width: min(800px, 95vw);
+}
+
+.porte {
+  width: 100px;
+  height: 100px;
+  perspective: 600px;
+}
+
+.porte-inner {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s ease;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.porte.ouverte .porte-inner {
+  transform: rotateY(180deg);
+}
+
+.porte-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.porte-devant {
+  background: crimson;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.7);
+}
+
+.porte-devant img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.numero {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 30px;
+  font-weight: bold;
+  color: gold;
+  text-shadow: 2px 2px 4px black;
+}
+
+.porte-arriere {
+  background: white;
+  color: black;
+  transform: rotateY(180deg);
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+}
+
+.magie {
+  opacity: 0;
+  animation: apparition 2s forwards;
+}
+
+.video-porte-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-porte-overlay video {
+  width: min(80vw, 800px);
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 0 30px gold;
+}
+
+@keyframes apparition {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ===== NEIGE ===== */
+canvas#snow-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===== FINALE ===== */
+#finale {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  text-align: center;
+  z-index: 200;
+  animation: fadeIn 0.6s ease forwards;
+}
+
+#finale h1 {
+  font-family:'Great Vibes', cursive;
+  margin-top: 20%;
+  font-size: 2.5em;
+  color: gold;
+  text-shadow: 2px 2px 5px red;
+  animation: scintillement 1.5s infinite alternate;
+}
+
+.finale-texte {
+  display: block;
+  color: gold;
+  text-shadow: 0 0 8px gold, 0 0 15px #ff99ff;
+}
+
+#etoile-fermeture {
+  cursor: pointer;
+  font-size: 1.2em;
+  margin-left: 10px;
+}
+
+canvas#fireworks {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 201;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scintillement {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div id="overlay-video-porte" class="video-porte-overlay" style="display:none"></div>
+
+<!-- FOND -->
+<div id="fond-traineau">
+  <video id="video-traineau" autoplay loop muted playsinline>
+    <source src="marina/traineau.mp4" type="video/mp4">
+  </video>
+  <img id="image-traineau" src="image/traineau.png">
+</div>
+
+<h1>🎄 Calendrier magique pour Marina 🎄</h1>
+<div id="calendrier"></div>
+
+<!-- ===== FINALE ===== -->
+<div id="finale">
+  <h1> ✨ Joyeux Noël Marina ! ✨<br>
+    <span class="finale-texte">
+	✨ et bonnes fêtes de fin d'année !
+      <span id="etoile-fermeture">✨</span>
+    </span>
+  </h1>
+
+  <audio id="musique" src="son/noel.mp3" preload="auto"></audio>
+  <canvas id="fireworks"></canvas>
+</div>
+
+<!-- SONS -->
+<audio id="clochettes" src="son/clochettes.mp3"></audio>
+<audio id="voix-noel"></audio>
+
+<!-- NEIGE -->
+<canvas id="snow-canvas"></canvas>
+
+<script>
+const calendrier = document.getElementById("calendrier");
+const videoTraineau = document.getElementById("video-traineau");
+const imageTraineau = document.getElementById("image-traineau");
+
+let portesOuvertes = 0;
+let videoPorteActive = null;
+let porteActive = null;
+
+
+
+/* ===== FOND ===== */
+function showVideo() {
+  imageTraineau.style.display = "none";
+  videoTraineau.style.display = "block";
+  videoTraineau.currentTime = 0;
+  videoTraineau.play().catch(()=>{});
+}
+
+function showImage() {
+  videoTraineau.pause();
+  videoTraineau.style.display = "none";
+  imageTraineau.style.display = "block";
+}
+
+/* =====  PORTE ===== */
+
+function ouvrirPorte(porte, jour) {
+  // Ferme toute autre porte ouverte
+  document.querySelectorAll(".porte.ouverte").forEach(p => {
+    if (p !== porte) fermerPorteManuellement(p);
+  });
+
+  porte.classList.add("ouverte");
+  portesOuvertes = 1;
+  showImage();
+
+  setTimeout(() => {
+    const video = porte.querySelector("video");
+    if (!video) return;
+
+    // 🔁 RESET TOTAL DE LA VIDÉO
+	video.pause();
+	video.currentTime = 0;
+	video.load();
+
+	// 🎬 LANCEMENT EN OVERLAY (fenêtre agrandie)
+	lancerVideoPorte(video, porte); 
+
+	}, 400);
+
+  // 🎆 Finale
+  if (jour === 24) lancerFinale();
+}
+
+function fermerPorteAuto(porte) {
+  const video = porte.querySelector("video");
+  if (video) {
+    video.pause();
+    video.currentTime = 0;
+    video.style.display = "none";
+  }
+
+  porte.classList.remove("ouverte");
+  portesOuvertes = 0;
+  showVideo();
+}
+
+function fermerPorteManuellement(porte) {
+  const video = porte.querySelector("video");
+  if (video) {
+    video.pause();
+    video.currentTime = 0;
+    video.style.display = "none";
+  }
+
+  porte.classList.remove("ouverte");
+  portesOuvertes = 0;
+  showVideo();
+}
+
+/* ===== VIDEOS DE PORTE ===== */
+
+function lancerVideoPorte(video, porte) {
+  const overlay = document.getElementById("overlay-video-porte");
+  overlay.innerHTML = "";
+  overlay.appendChild(video);
+  overlay.style.display = "flex";
+
+  videoPorteActive = video;
+  porteActive = porte;
+
+  video.currentTime = 0;
+  video.play();
+
+  video.onended = fermerVideoPorte;
+}
+
+function fermerVideoPorte() {
+  const overlay = document.getElementById("overlay-video-porte");
+  overlay.style.display = "none";
+  overlay.innerHTML = "";
+
+  if (videoPorteActive && porteActive) {
+    videoPorteActive.pause();
+    videoPorteActive.currentTime = 0;
+
+    // 🔁 REMET LA VIDÉO DANS LA PORTE
+    const arriere = porteActive.querySelector(".porte-arriere");
+    if (arriere) arriere.appendChild(videoPorteActive);
+
+    porteActive.classList.remove("ouverte");
+    portesOuvertes = 0;
+  }
+
+  videoPorteActive = null;
+  porteActive = null;
+
+  showVideo();
+}
+
+/* ===== CONTENU ===== */
+//const contenus = Array.from({length:24}, (_,i)=>`<span class='magie'>✨ Surprise ${i+1} ✨</span>`);
+
+
+
+const contenus = [
+  "<video  controls width='250'><source src='marina/porte1.mp4' type='video/mp4'></video>", //porte01
+  "<video  controls width='250'><source src='marina/porte2.mp4' type='video/mp4'></video>", //porte02
+  "<video  controls width='250'><source src='marina/porte3.mp4' type='video/mp4'></video>", //porte03
+  "<video  controls width='250'><source src='marina/porte4.mp4' type='video/mp4'></video>", //porte04
+  "<video  controls width='250'><source src='marina/porte5.mp4' type='video/mp4'></video>", //porte05
+  "<video  controls width='250'><source src='marina/porte6.mp4' type='video/mp4'></video>", //porte06
+  "<video  controls width='250'><source src='marina/porte7.mp4' type='video/mp4'></video>", //porte07
+  "<video  controls width='250'><source src='marina/porte8.mp4' type='video/mp4'></video>", //porte08
+  "<video  controls width='250'><source src='marina/porte9.mp4' type='video/mp4'></video>", //porte09
+  "<video  controls width='250'><source src='marina/porte10.mp4' type='video/mp4'></video>", //porte10
+  "<video  controls width='250'><source src='marina/porte11.mp4' type='video/mp4'></video>", //porte11
+  "<video  controls width='250'><source src='marina/porte12.mp4' type='video/mp4'></video>", //porte12
+  "<video  controls width='250'><source src='marina/porte13.mp4' type='video/mp4'></video>", //porte13
+  "<video  controls width='250'><source src='marina/porte14.mp4' type='video/mp4'></video>", //porte14
+  "<video  controls width='250'><source src='marina/porte15.mp4' type='video/mp4'></video>", //porte15
+  "<video  controls width='250'><source src='marina/porte16.mp4' type='video/mp4'></video>", //porte16
+  "<video  controls width='250'><source src='marina/porte17.mp4' type='video/mp4'></video>", //porte17
+  "<video  controls width='250'><source src='marina/porte18.mp4' type='video/mp4'></video>", //porte18
+  "<video  controls width='250'><source src='marina/porte19.mp4' type='video/mp4'></video>", //porte19
+  "<video  controls width='250'><source src='marina/porte20.mp4' type='video/mp4'></video>", //porte20
+  "<video  controls width='250'><source src='marina/porte21.mp4' type='video/mp4'></video>", //porte21
+  "<video  controls width='250'><source src='marina/porte22.mp4' type='video/mp4'></video>", //porte22
+  "<video  controls width='250'><source src='marina/porte23.mp4' type='video/mp4'></video>", //porte23
+  "🎆 La grande finale avec musique et feux d’artifice 🎇"
+];
+
+
+
+
+/* ===== PORTES ===== */
+for(let jour=1; jour<=24; jour++){
+  const porte = document.createElement("div");
+  porte.className="porte";
+
+  const inner=document.createElement("div");
+  inner.className="porte-inner";
+
+  const devant=document.createElement("div");
+  devant.className="porte-face porte-devant";
+
+  const img=document.createElement("img");
+  img.src="image/perenoel.jpg";
+
+  const num=document.createElement("span");
+  num.className="numero";
+  num.textContent=jour;
+
+  devant.append(img,num);
+
+  const arriere=document.createElement("div");
+  arriere.className="porte-face porte-arriere";
+  arriere.innerHTML=contenus[jour-1];
+
+  inner.append(devant,arriere);
+  porte.append(inner);
+  calendrier.append(porte);
+
+porte.onclick = (e) => {
+  e.stopPropagation();
+
+  const estOuverte = porte.classList.contains("ouverte");
+
+  if (!estOuverte) {
+    ouvrirPorte(porte, jour);
+  } else {
+    fermerPorteManuellement(porte);
+  }
+
+  document.getElementById("clochettes").play().catch(()=>{});
+};
+
+
+}
+
+
+/* ===== CLIC PAUSE / PLAY ===== */
+
+document.addEventListener("click", () => {
+
+  // 🎬 PRIORITÉ : une vidéo de porte est active
+  if (videoPorteActive && porteActive) {
+    fermerVideoPorte();
+    return;
+  }
+
+  // 🚪 Sinon : une porte ouverte sans vidéo
+  const porteOuverte = document.querySelector(".porte.ouverte");
+  if (porteOuverte) {
+    fermerPorteManuellement(porteOuverte);
+    return;
+  }
+
+  // ❄️ Sinon : pause / play du traîneau
+  if (videoTraineau.paused) {
+    videoTraineau.play().catch(() => {});
+  } else {
+    videoTraineau.pause();
+  }
+});
+
+/* ===== LANCEMENT ===== */
+document.addEventListener("DOMContentLoaded", showVideo);
+
+
+let finaleActive = false;
+let fireworksInterval = null;
+let fireworksAnimationId = null;
+
+/* ===== FINALE ===== */
+function lancerFinale() {
+  if (finaleActive) return;
+  finaleActive = true;
+
+  const overlay = document.getElementById("finale");
+  overlay.style.display = "block";
+
+  const musique = document.getElementById("musique");
+  musique.currentTime = 0;
+  musique.play().catch(()=>{});
+
+  const canvas = document.getElementById("fireworks");
+  const ctx = canvas.getContext("2d");
+  resizeCanvas(canvas);
+
+  const fireworks = [];
+
+  function Firework(x, y) {
+    this.particles = Array.from({ length: 60 }, () => ({
+      x, y,
+      dx: (Math.random() - 0.5) * 6,
+      dy: (Math.random() - 0.5) * 6,
+      life: 100
+    }));
+  }
+
+  fireworksInterval = setInterval(() => {
+    fireworks.push(new Firework(
+      Math.random() * canvas.width,
+      Math.random() * canvas.height / 2
+    ));
+  }, 900);
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fireworks.forEach(f =>
+      f.particles.forEach(p => {
+        ctx.globalAlpha = p.life / 100;
+        ctx.fillStyle = "gold";
+        ctx.fillRect(p.x, p.y, 2, 2);
+        p.x += p.dx;
+        p.y += p.dy;
+        p.life--;
+      })
+    );
+    ctx.globalAlpha = 1;
+    fireworksAnimationId = requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+/* ===== FERMETURE DU FINAL ===== */
+function fermerFinale() {
+  document.getElementById("finale").style.display = "none";
+
+  const musique = document.getElementById("musique");
+  musique.pause();
+  musique.currentTime = 0;
+
+  clearInterval(fireworksInterval);
+  cancelAnimationFrame(fireworksAnimationId);
+
+  fireworksInterval = null;
+  fireworksAnimationId = null;
+  finaleActive = false;
+}
+
+/* ===== OUTILS ===== */
+function resizeCanvas(cnv) {
+  cnv.width = window.innerWidth;
+  cnv.height = window.innerHeight;
+}
+
+/* ===== ÉTOILE DE FERMETURE ===== */
+document.addEventListener("DOMContentLoaded", () => {
+  const etoile = document.getElementById("etoile-fermeture");
+  if (etoile) {
+    etoile.addEventListener("click", e => {
+      e.stopPropagation();
+      fermerFinale();
+    });
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  showVideo();
+});
+
+
+</script>
+
+</body>
+</html>
